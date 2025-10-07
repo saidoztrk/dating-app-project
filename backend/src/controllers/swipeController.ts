@@ -141,3 +141,43 @@ export const getLikesReceived = async (req: Request, res: Response): Promise<voi
         });
     }
 };
+export const rewindSwipe = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = req.user?.userId;
+        const db = getDB();
+
+        // Get last swipe
+        const result = await db.request()
+            .input('userId', userId)
+            .query(`
+        SELECT TOP 1 SwipeID, SwipedUserID, SwipeType
+        FROM Swipes
+        WHERE SwipedByUserID = @userId
+        ORDER BY SwipedAt DESC
+      `);
+
+        if (result.recordset.length === 0) {
+            res.status(404).json({
+                success: false,
+                message: 'No swipes to undo'
+            });
+            return;
+        }
+
+        const lastSwipe = result.recordset[0];
+
+        // Delete last swipe
+        await db.request()
+            .input('swipeId', lastSwipe.SwipeID)
+            .query('DELETE FROM Swipes WHERE SwipeID = @swipeId');
+
+        res.status(200).json({
+            success: true,
+            message: 'Swipe undone',
+            data: { swipedUserId: lastSwipe.SwipedUserID }
+        });
+    } catch (error) {
+        console.error('Rewind error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};

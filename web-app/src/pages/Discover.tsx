@@ -54,6 +54,27 @@ export default function Discover() {
         }
     };
 
+    const handleRewind = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.post('http://localhost:5000/api/rewind', {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (response.data.success) {
+                setCurrentIndex(currentIndex - 1);
+                alert('Swipe undone!');
+            }
+        } catch (error: any) {
+            if (error.response?.data?.upgrade) {
+                alert('Premium feature! Upgrade to use Rewind.');
+                window.location.href = '/premium';
+            } else {
+                alert('Cannot undo');
+            }
+        }
+    };
+
     if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
     if (currentIndex >= users.length) return <div className="flex items-center justify-center h-screen text-2xl">No more profiles</div>;
 

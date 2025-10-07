@@ -2,6 +2,8 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import subscriptionRoutes from './routes/subscriptionRoutes';
+
 
 // Load env vars
 dotenv.config();
@@ -45,6 +47,8 @@ app.use('/api', swipeRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/photos', photoRoutes);;
+app.use('/api/subscriptions', subscriptionRoutes);
+
 
 // 404 handler
 app.use((req: Request, res: Response) => {

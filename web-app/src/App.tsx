@@ -7,6 +7,9 @@ import Chat from './pages/Chat';
 import Profile from './pages/Profile';
 import Likes from './pages/Likes';
 import Settings from './pages/Settings';
+import Premium from './pages/Premium';
+
+
 
 
 
@@ -19,6 +22,7 @@ function App() {
         <a href="/profile" className="hover:underline">Profile</a>
         <a href="/likes" className="hover:underline">Likes</a>
         <a href="/settings" className="hover:underline">Settings</a>
+        <a href="/premium" className="hover:underline">Premium</a>
       </nav>
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
@@ -30,6 +34,8 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/likes" element={<Likes />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/premium" element={<Premium />} />
+
       </Routes>
     </BrowserRouter>
   );

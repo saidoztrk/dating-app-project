@@ -1,5 +1,7 @@
 import app from './app';
 import { connectDB, closeDB } from './config/database';
+import { createServer } from 'http';
+import { initializeSocket } from './sockets/socketHandler';
 
 const PORT = process.env.PORT || 5000;
 
@@ -11,8 +13,15 @@ const startServer = async () => {
         await connectDB();
         console.log('✅ Database connected successfully');
 
-        // Start Express server
-        server = app.listen(PORT, () => {
+        // Create HTTP server
+        const httpServer = createServer(app);
+
+        // Initialize Socket.io
+        const io = initializeSocket(httpServer);
+        console.log('✅ Socket.io initialized');
+
+        // Start server
+        server = httpServer.listen(PORT, () => {
             console.log(`
 ========================================
 🚀 Server is running!

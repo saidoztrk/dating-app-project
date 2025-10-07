@@ -32,9 +32,19 @@ app.get('/health', (req: Request, res: Response) => {
 
 // Import routes
 import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
+import swipeRoutes from './routes/swipeRoutes';
+import matchRoutes from './routes/matchRoutes';
+import messageRoutes from './routes/messageRoutes';
+import photoRoutes from './routes/photoRoutes';
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api', swipeRoutes);
+app.use('/api/matches', matchRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/photos', photoRoutes);;
 
 // 404 handler
 app.use((req: Request, res: Response) => {

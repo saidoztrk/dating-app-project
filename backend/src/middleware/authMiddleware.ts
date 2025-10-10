@@ -1,3 +1,4 @@
+// backend/src/middleware/authMiddleware.ts
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, TokenPayload } from '../utils/jwt';
 
@@ -5,7 +6,7 @@ import { verifyAccessToken, TokenPayload } from '../utils/jwt';
 declare global {
     namespace Express {
         interface Request {
-            user?: TokenPayload;
+            user?: TokenPayload & { role?: string };
         }
     }
 }

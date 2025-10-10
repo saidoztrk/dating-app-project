@@ -1,5 +1,7 @@
+// backend/src/controllers/swipeController.ts
 import { Request, Response } from 'express';
 import { getDB } from '../config/database';
+import { createNotification } from './notificationController';
 
 export const getPotentialMatches = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -57,34 +59,70 @@ export const swipe = async (req: Request, res: Response): Promise<void> => {
             .input('swipedUserId', swipedUserId)
             .input('swipeType', swipeType)
             .query(`
-        INSERT INTO Swipes (SwipedByUserID, SwipedUserID, SwipeType)
-        VALUES (@swipedByUserId, @swipedUserId, @swipeType)
-      `);
+                INSERT INTO Swipes (SwipedByUserID, SwipedUserID, SwipeType)
+                VALUES (@swipedByUserId, @swipedUserId, @swipeType)
+            `);
+
+        // Send notification for likes
+        if (swipeType === 'LIKE' || swipeType === 'SUPERLIKE') {
+            const notifTitle = swipeType === 'SUPERLIKE' ? 'Someone Super Liked You! ⭐' : 'Someone Likes You! ❤️';
+            await createNotification(
+                swipedUserId,
+                swipeType,
+                notifTitle,
+                'Check who liked you',
+                userId
+            );
+        }
 
         // Check for mutual like
         let isMatch = false;
+        let matchId = null;
+
         if (swipeType === 'LIKE' || swipeType === 'SUPERLIKE') {
             const mutualCheck = await db.request()
                 .input('userId', userId)
                 .input('swipedUserId', swipedUserId)
                 .query(`
-          SELECT SwipeID FROM Swipes
-          WHERE SwipedByUserID = @swipedUserId 
-            AND SwipedUserID = @userId 
-            AND SwipeType IN ('LIKE', 'SUPERLIKE')
-        `);
+                    SELECT SwipeID FROM Swipes
+                    WHERE SwipedByUserID = @swipedUserId 
+                        AND SwipedUserID = @userId 
+                        AND SwipeType IN ('LIKE', 'SUPERLIKE')
+                `);
 
             if (mutualCheck.recordset.length > 0) {
                 isMatch = true;
 
                 // Create match
-                await db.request()
+                const matchResult = await db.request()
                     .input('user1Id', Math.min(userId!, swipedUserId))
                     .input('user2Id', Math.max(userId!, swipedUserId))
                     .query(`
-            INSERT INTO Matches (User1ID, User2ID)
-            VALUES (@user1Id, @user2Id)
-          `);
+                        INSERT INTO Matches (User1ID, User2ID)
+                        OUTPUT INSERTED.MatchID
+                        VALUES (@user1Id, @user2Id)
+                    `);
+
+                matchId = matchResult.recordset[0].MatchID;
+
+                // Send match notifications to both users
+                await createNotification(
+                    userId!,
+                    'MATCH',
+                    'It\'s a Match! 🎉',
+                    'You matched with someone special',
+                    swipedUserId,
+                    matchId
+                );
+
+                await createNotification(
+                    swipedUserId,
+                    'MATCH',
+                    'It\'s a Match! 🎉',
+                    'You matched with someone special',
+                    userId!,
+                    matchId
+                );
             }
         }
 
@@ -92,7 +130,8 @@ export const swipe = async (req: Request, res: Response): Promise<void> => {
             success: true,
             message: isMatch ? 'It\'s a match!' : 'Swipe recorded',
             data: {
-                isMatch
+                isMatch,
+                matchId
             }
         });
     } catch (error) {
@@ -112,20 +151,20 @@ export const getLikesReceived = async (req: Request, res: Response): Promise<voi
         const result = await db.request()
             .input('userId', userId)
             .query(`
-        SELECT 
-          u.UserID,
-          u.FirstName,
-          u.BirthDate,
-          u.Bio,
-          u.City,
-          s.SwipedAt,
-          DATEDIFF(YEAR, u.BirthDate, GETDATE()) AS Age
-        FROM Swipes s
-        INNER JOIN Users u ON s.SwipedByUserID = u.UserID
-        WHERE s.SwipedUserID = @userId 
-          AND s.SwipeType IN ('LIKE', 'SUPERLIKE')
-        ORDER BY s.SwipedAt DESC
-      `);
+                SELECT 
+                    u.UserID,
+                    u.FirstName,
+                    u.BirthDate,
+                    u.Bio,
+                    u.City,
+                    s.SwipedAt,
+                    DATEDIFF(YEAR, u.BirthDate, GETDATE()) AS Age
+                FROM Swipes s
+                INNER JOIN Users u ON s.SwipedByUserID = u.UserID
+                WHERE s.SwipedUserID = @userId 
+                    AND s.SwipeType IN ('LIKE', 'SUPERLIKE')
+                ORDER BY s.SwipedAt DESC
+            `);
 
         res.status(200).json({
             success: true,
@@ -141,6 +180,7 @@ export const getLikesReceived = async (req: Request, res: Response): Promise<voi
         });
     }
 };
+
 export const rewindSwipe = async (req: Request, res: Response): Promise<void> => {
     try {
         const userId = req.user?.userId;
@@ -150,11 +190,11 @@ export const rewindSwipe = async (req: Request, res: Response): Promise<void> =>
         const result = await db.request()
             .input('userId', userId)
             .query(`
-        SELECT TOP 1 SwipeID, SwipedUserID, SwipeType
-        FROM Swipes
-        WHERE SwipedByUserID = @userId
-        ORDER BY SwipedAt DESC
-      `);
+                SELECT TOP 1 SwipeID, SwipedUserID, SwipeType
+                FROM Swipes
+                WHERE SwipedByUserID = @userId
+                ORDER BY SwipedAt DESC
+            `);
 
         if (result.recordset.length === 0) {
             res.status(404).json({

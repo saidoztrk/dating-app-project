@@ -1,3 +1,4 @@
+// backend/src/utils/jwt.ts
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
@@ -8,6 +9,7 @@ const JWT_REFRESH_EXPIRE = process.env.JWT_REFRESH_EXPIRE || '30d';
 export interface TokenPayload {
     userId: number;
     email: string;
+    role?: string;
 }
 
 export const generateAccessToken = (payload: TokenPayload): string => {

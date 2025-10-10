@@ -1,9 +1,8 @@
+// backend/src/app.ts
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import subscriptionRoutes from './routes/subscriptionRoutes';
-
 
 // Load env vars
 dotenv.config();
@@ -39,6 +38,10 @@ import swipeRoutes from './routes/swipeRoutes';
 import matchRoutes from './routes/matchRoutes';
 import messageRoutes from './routes/messageRoutes';
 import photoRoutes from './routes/photoRoutes';
+import subscriptionRoutes from './routes/subscriptionRoutes';
+import notificationRoutes from './routes/notificationRoutes';
+import adminRoutes from './routes/adminRoutes';
+import reportRoutes from './routes/reportRoutes';
 
 // API routes
 app.use('/api/auth', authRoutes);
@@ -46,9 +49,11 @@ app.use('/api/users', userRoutes);
 app.use('/api', swipeRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/api/photos', photoRoutes);;
+app.use('/api/photos', photoRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
-
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/reports', reportRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

@@ -1,5 +1,7 @@
+// src/pages/Discover.tsx  (ya da senin dosya yolun her neyse)
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import ReportUserButton from '../components/ReportUserButton';
 
 interface User {
     UserID: number;
@@ -37,18 +39,15 @@ export default function Discover() {
         const currentUser = users[currentIndex];
 
         try {
-            const response = await axios.post('http://localhost:5000/api/swipe', {
-                swipedUserId: currentUser.UserID,
-                swipeType: type
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await axios.post('http://localhost:5000/api/swipe',
+                { swipedUserId: currentUser.UserID, swipeType: type },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
 
             if (response.data.data.isMatch) {
                 alert("It's a Match! 🎉");
             }
-
-            setCurrentIndex(currentIndex + 1);
+            setCurrentIndex((i) => i + 1);
         } catch (error) {
             console.error('Swipe error:', error);
         }
@@ -62,7 +61,7 @@ export default function Discover() {
             });
 
             if (response.data.success) {
-                setCurrentIndex(currentIndex - 1);
+                setCurrentIndex((i) => Math.max(0, i - 1));
                 alert('Swipe undone!');
             }
         } catch (error: any) {
@@ -86,25 +85,53 @@ export default function Discover() {
                 <div className="h-96 bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center">
                     <div className="text-white text-6xl font-bold">{currentUser.FirstName[0]}</div>
                 </div>
+
+                {/* Profil Bilgileri */}
                 <div className="p-6">
-                    <h2 className="text-3xl font-bold">{currentUser.FirstName}, {currentUser.Age}</h2>
-                    <p className="text-gray-600 mt-2">{currentUser.City} • {currentUser.DistanceInMiles} miles away</p>
-                    <p className="mt-4 text-gray-700">{currentUser.Bio || 'No bio available'}</p>
+                    <h2 className="text-3xl font-bold">
+                        {currentUser.FirstName}, {currentUser.Age}
+                    </h2>
+                    <p className="text-gray-600 mt-2">
+                        {currentUser.City} • {currentUser.DistanceInMiles} miles away
+                    </p>
+                    <p className="mt-4 text-gray-700">
+                        {currentUser.Bio || 'No bio available'}
+                    </p>
+
+                    {/* Report Button Ekle */}
+                    <div className="mt-4">
+                        <ReportUserButton
+                            reportedUserId={currentUser.UserID}
+                            reportedUserName={currentUser.FirstName}
+                        />
+                    </div>
                 </div>
+
+                {/* Aksiyon Butonları */}
                 <div className="flex gap-4 p-6">
                     <button
                         onClick={() => handleSwipe('DISLIKE')}
                         className="flex-1 bg-gray-200 text-gray-700 py-4 rounded-full font-semibold text-xl hover:bg-gray-300"
+                        aria-label="Dislike"
                     >
                         ✕
                     </button>
                     <button
                         onClick={() => handleSwipe('LIKE')}
                         className="flex-1 bg-pink-500 text-white py-4 rounded-full font-semibold text-xl hover:bg-pink-600"
+                        aria-label="Like"
                     >
                         ♥
                     </button>
                 </div>
+
+                {/* (Opsiyonel) Rewind butonu eklemek istersen:
+        <div className="px-6 pb-6">
+          <button onClick={handleRewind} className="w-full bg-yellow-100 text-yellow-800 py-2 rounded-lg hover:bg-yellow-200">
+            Rewind
+          </button>
+        </div>
+        */}
             </div>
         </div>
     );
